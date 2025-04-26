@@ -1,0 +1,33 @@
+{
+  "name": "watch",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "eslint lib",
+    "watch": "watchify ./lib/app.js -o docs/app.js -v"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AI6YP/watch.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/AI6YP/watch/issues"
+  },
+  "homepage": "https://github.com/AI6YP/watch#readme",
+  "devDependencies": {
+    "@drom/eslint-config": "^0.12.0",
+    "browserify": "^17.0.0",
+    "eslint": "^8.56.0",
+    "onml": "^2.1.0",
+    "watchify": "^4.0.0"
+  },
+  "eslintConfig": {
+    "extends": "@drom/eslint-config/eslint8/node12"
+  },
+  "dependencies": {
+    "lodash.range": "^3.2.0"
+  }
+}
