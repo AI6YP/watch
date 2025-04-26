@@ -6,7 +6,7 @@ const fs = require('fs');
 
 const range = require('lodash.range');
 
-const { writeFile, mkdir } = fs.promises;
+const { writeFile, mkdir, access } = fs.promises;
 
 const pcbHeader = () => `\
 (kicad_pcb
@@ -720,7 +720,11 @@ const labels = ({center}) => [
 const main = async () => {
   const pcbFilePathOnly = path.resolve(__dirname, '..', 'dial2');
 
-  await mkdir(pcbFilePathOnly);
+  try {
+    await access(pcbFilePathOnly);
+  } catch (error) {
+    await mkdir(pcbFilePathOnly);
+  }
 
   const pcbFilePath = path.resolve(pcbFilePathOnly, 'dial2.kicad_pcb');
 
