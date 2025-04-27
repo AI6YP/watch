@@ -718,7 +718,7 @@ const labels = ({center}) => [
 ];
 
 const main = async () => {
-  const pcbFilePathOnly = path.resolve(__dirname, '..', 'dial-v1');
+  const pcbFilePathOnly = path.resolve(__dirname, '..', 'dial-v2');
 
   try {
     await access(pcbFilePathOnly);
@@ -726,7 +726,7 @@ const main = async () => {
     await mkdir(pcbFilePathOnly);
   }
 
-  const pcbFilePath = path.resolve(pcbFilePathOnly, 'dial-v1.kicad_pcb');
+  const pcbFilePath = path.resolve(pcbFilePathOnly, 'dial-v2.kicad_pcb');
 
   const center = {x: 50, y: 50};
   const pcbFileBody = [
