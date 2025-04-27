@@ -154,11 +154,11 @@ const grCircle = (pos) => `
     (layer "${pos.layer}")
   )`;
 
-const grRect = ({start, end, layer, fill}) => `
+const grRect = ({start, end, layer, fill, stroke}) => `
   (gr_rect
     (start ${start.x} ${start.y})
     (end ${end.x} ${end.y})
-    (stroke (width 0.05) (type default))
+    (stroke (width ${stroke?.width || 0.05}) (type default))
     (fill ${fill ? 'yes' : 'no'})
     (layer "${layer}")
   )`;
@@ -353,8 +353,94 @@ const hmark = ({x, y, a}) => `
     (attr smd)
     (pad "1" thru_hole oval
       (at 0 0 ${-a})
+      (size 1.4 3.6)
+      (drill oval 0.8 3.0)
+      (layers "*.Cu" "*.Mask")
+      (remove_unused_layers no)
+    )
+    (embedded_fonts no)
+  )`;
+
+const hmarkDot = ({x, y, a}) => `
+  (footprint "AI6YP:hmark_dot"
+    (layer "F.Cu")
+    (at ${x} ${y} 0)
+    (descr "generated")
+    (tags "watch")
+    (attr smd)
+    (pad "1" thru_hole oval
+      (at 0 0 ${-a})
+      (size 1.4 1.4)
+      (drill oval 0.8 0.8)
+      (layers "*.Cu" "*.Mask")
+      (remove_unused_layers no)
+    )
+    (embedded_fonts no)
+  )`;
+
+const hmarkAnt = ({x, y}) => `
+  (footprint "AI6YP:hmark_ant"
+    (layer "F.Cu")
+    (at ${x} ${y} 0)
+    (descr "generated")
+    (tags "watch")
+    (attr smd)
+    (pad "1" thru_hole oval
+      (at 0 3 0)
+      (size 1.2 6.2)
+      (drill oval 0.6 5.6)
+      (layers "*.Cu" "*.Mask")
+      (remove_unused_layers no)
+    )
+    (pad "2" thru_hole oval
+      (at -1.2 2 35)
+      (size 1.2 4.8)
+      (drill oval 0.6 4.2)
+      (layers "*.Cu" "*.Mask")
+      (remove_unused_layers no)
+    )
+    (pad "3" thru_hole oval
+      (at 1.2 2 -35)
+      (size 1.2 4.8)
+      (drill oval 0.6 4.2)
+      (layers "*.Cu" "*.Mask")
+      (remove_unused_layers no)
+    )
+    (embedded_fonts no)
+  )`;
+
+const hmarkGnd = ({x, y}) => `
+  (footprint "AI6YP:hmark_gnd"
+    (layer "F.Cu")
+    (at ${x} ${y} 0)
+    (descr "generated")
+    (tags "watch")
+    (attr smd)
+    (pad "1" thru_hole oval
+      (at 0 -4.5 0)
       (size 1.2 3.2)
-      (drill oval 0.8 2.8)
+      (drill oval 0.6 2.6)
+      (layers "*.Cu" "*.Mask")
+      (remove_unused_layers no)
+    )
+    (pad "2" thru_hole oval
+      (at 0 -3.5 90)
+      (size 1.2 5.4)
+      (drill oval 0.6 4.8)
+      (layers "*.Cu" "*.Mask")
+      (remove_unused_layers no)
+    )
+    (pad "3" thru_hole oval
+      (at 0 -2 90)
+      (size 1.2 3.6)
+      (drill oval 0.6 3.0)
+      (layers "*.Cu" "*.Mask")
+      (remove_unused_layers no)
+    )
+    (pad "4" thru_hole oval
+      (at 0 -0.5 90)
+      (size 1.2 1.8)
+      (drill oval 0.6 1.2)
       (layers "*.Cu" "*.Mask")
       (remove_unused_layers no)
     )
@@ -381,245 +467,29 @@ const dateWindow = ({x, y}) => `
 const radioDiamond = () => `\
   (footprint "AI6YP:RadioDiamond"
     (layer "F.Cu")
-    (at 50 38)
-    (property "Reference" "REF**"
-      (at -3.696666 -1.348333 0)
-      (unlocked yes)
-      (layer "F.SilkS")
-      (hide yes)
-      (effects
-        (font
-          (size 1 1)
-          (thickness 0.1)
-        )
-      )
-    )
-    (property "Value" "RadioDiamond"
-      (at -3.696666 0.151667 0)
-      (unlocked yes)
-      (layer "F.Fab")
-      (hide yes)
-      (effects
-        (font
-          (size 1 1)
-          (thickness 0.15)
-        )
-      )
-    )
-    (property "Datasheet" ""
-      (at -3.696666 -0.848333 0)
-      (unlocked yes)
-      (layer "F.Fab")
-      (hide yes)
-      (effects
-        (font
-          (size 1 1)
-          (thickness 0.15)
-        )
-      )
-    )
-    (property "Description" ""
-      (at -3.696666 -0.848333 0)
-      (unlocked yes)
-      (layer "F.Fab")
-      (hide yes)
-      (effects
-        (font
-          (size 1 1)
-          (thickness 0.15)
-        )
-      )
-    )
+    (at 50 50)
     (attr smd)
-    (fp_line
-      (start -1.4 -0.2)
-      (end -0.2 -0.2)
-      (stroke
-        (width 0.2)
-        (type solid)
-        (color 68 68 68 1)
-      )
-      (layer "F.SilkS")
-    )
-    (fp_line
-      (start -1.4 0.2)
-      (end -0.2 0.2)
-      (stroke
-        (width 0.2)
-        (type solid)
-        (color 68 68 68 1)
-      )
-      (layer "F.SilkS")
-    )
-    (fp_line
-      (start -0.8 -1.2)
-      (end 0.6 -1.2)
-      (stroke
-        (width 0.2)
-        (type solid)
-        (color 68 68 68 1)
-      )
-      (layer "F.SilkS")
-    )
-    (fp_line
-      (start -0.8 -0.2)
-      (end -0.8 -1.2)
-      (stroke
-        (width 0.2)
-        (type solid)
-        (color 68 68 68 1)
-      )
-      (layer "F.SilkS")
-    )
-    (fp_line
-      (start -0.8 1.2)
-      (end -0.8 0.2)
-      (stroke
-        (width 0.2)
-        (type solid)
-        (color 68 68 68 1)
-      )
-      (layer "F.SilkS")
-    )
-    (fp_line
-      (start -0.4 2)
-      (end 0.4 2)
-      (stroke
-        (width 0.2)
-        (type solid)
-        (color 68 68 68 1)
-      )
-      (layer "F.SilkS")
-    )
-    (fp_line
-      (start -0.2 2.4)
-      (end 0.2 2.4)
-      (stroke
-        (width 0.2)
-        (type solid)
-        (color 68 68 68 1)
-      )
-      (layer "F.SilkS")
-    )
-    (fp_line
-      (start 0 -1.8)
-      (end -0.4 -2.4)
-      (stroke
-        (width 0.2)
-        (type solid)
-        (color 68 68 68 1)
-      )
-      (layer "F.SilkS")
-    )
-    (fp_line
-      (start 0 -1.8)
-      (end 0.4 -2.4)
-      (stroke
-        (width 0.2)
-        (type solid)
-        (color 68 68 68 1)
-      )
-      (layer "F.SilkS")
-    )
-    (fp_line
-      (start 0 -1.2)
-      (end 0 -2.4)
-      (stroke
-        (width 0.2)
-        (type solid)
-        (color 68 68 68 1)
-      )
-      (layer "F.SilkS")
-    )
-    (fp_line
-      (start 0 1.2)
-      (end 0 2)
-      (stroke
-        (width 0.2)
-        (type solid)
-        (color 68 68 68 1)
-      )
-      (layer "F.SilkS")
-    )
-    (fp_line
-      (start 0 2.8)
-      (end 0 2.8)
-      (stroke
-        (width 0.2)
-        (type solid)
-        (color 68 68 68 1)
-      )
-      (layer "F.SilkS")
-    )
-    (fp_line
-      (start 0.6 1.2)
-      (end -0.8 1.2)
-      (stroke
-        (width 0.2)
-        (type solid)
-        (color 68 68 68 1)
-      )
-      (layer "F.SilkS")
-    )
-    (fp_arc
-      (start 0.6 -1.2)
-      (mid 1 -0.8)
-      (end 0.6 -0.4)
-      (stroke
-        (width 0.2)
-        (type solid)
-      )
-      (layer "F.SilkS")
-    )
-    (fp_arc
-      (start 0.6 -0.4)
-      (mid 1 0)
-      (end 0.6 0.4)
-      (stroke
-        (width 0.2)
-        (type solid)
-      )
-      (layer "F.SilkS")
-    )
-    (fp_arc
-      (start 0.6 0.4)
-      (mid 1 0.8)
-      (end 0.6 1.2)
-      (stroke
-        (width 0.2)
-        (type solid)
-      )
-      (layer "F.SilkS")
-    )
-    (fp_poly
-      (pts
-        (xy 2 0) (xy 0 4) (xy -2 0) (xy 0 -4)
-      )
-      (stroke
-        (width 0.2)
-        (type solid)
-        (color 68 68 68 1)
-      )
-      (fill no)
-      (layer "F.SilkS")
-    )
-    (fp_text user "\${REFERENCE}"
-      (at -3.696666 1.651667 0)
-      (unlocked yes)
-      (layer "F.Fab")
-      (hide yes)
-      (effects
-        (font
-          (size 1 1)
-          (thickness 0.15)
-        )
-      )
-    )
+    (fp_line (start  0   -9  ) (end  0   -8  ) (stroke (width 0.3) (type solid) (color 68 68 68 1)) (layer "F.SilkS"))
+    (fp_line (start  0   -5  ) (end  0   -4  ) (stroke (width 0.3) (type solid) (color 68 68 68 1)) (layer "F.SilkS"))
+    (fp_line (start  0    5  ) (end  0    4  ) (stroke (width 0.3) (type solid) (color 68 68 68 1)) (layer "F.SilkS"))
+    (fp_line (start  0    9  ) (end  0    8  ) (stroke (width 0.3) (type solid) (color 68 68 68 1)) (layer "F.SilkS"))
+    (fp_line (start -4   -4  ) (end  4   -4  ) (stroke (width 0.3) (type solid) (color 68 68 68 1)) (layer "F.SilkS"))
+    (fp_line (start -4    4  ) (end  4    4  ) (stroke (width 0.3) (type solid) (color 68 68 68 1)) (layer "F.SilkS"))
+
+    (fp_line (start -4   -4  ) (end -4   -0.7) (stroke (width 0.3) (type solid) (color 68 68 68 1)) (layer "F.SilkS"))
+    (fp_line (start -6   -0.7) (end -2   -0.7) (stroke (width 0.3) (type solid) (color 68 68 68 1)) (layer "F.SilkS"))
+    (fp_line (start -6    0.7) (end -2    0.7) (stroke (width 0.3) (type solid) (color 68 68 68 1)) (layer "F.SilkS"))
+    (fp_line (start -4    4  ) (end -4    0.7) (stroke (width 0.3) (type solid) (color 68 68 68 1)) (layer "F.SilkS"))
+
+    (fp_arc  (start  4   -4  ) (mid  5   -3  ) (end  4   -2  ) (stroke (width 0.3) (type solid)) (layer "F.SilkS"))
+    (fp_arc  (start  4   -2  ) (mid  5   -0.7) (end  4    0  ) (stroke (width 0.3) (type solid)) (layer "F.SilkS"))
+    (fp_arc  (start  4    0  ) (mid  5    0.7) (end  4    2  ) (stroke (width 0.3) (type solid)) (layer "F.SilkS"))
+    (fp_arc  (start  4    2  ) (mid  5    3  ) (end  4    4  ) (stroke (width 0.3) (type solid)) (layer "F.SilkS"))
     (embedded_fonts no)
   )`;
 
 const text24 = ({radius, center}) => [
-  ...range(1, 24).map(idx => {
+  ...[...range(1, 12), ...range(13, 24)].map(idx => {
     const f = (idx > 6) && (idx < 18);
     return grText({
       text: idx,
@@ -632,7 +502,7 @@ const text24 = ({radius, center}) => [
       layer: 'F.SilkS'
     });
   }),
-  ...range(0.5, 25, 1).map(idx => grLine({
+  ...range(1.5, 23, 1).map(idx => grLine({
     start: {
       x: ((radius + .2) *  Math.sin(Math.PI * (idx / 12)) + center.x).toFixed(2),
       y: ((radius + .2) * -Math.cos(Math.PI * (idx / 12)) + center.y).toFixed(2),
@@ -643,7 +513,7 @@ const text24 = ({radius, center}) => [
     },
     layer: 'F.SilkS'
   })),
-  ...range(2, 59).flatMap((idx) => !(idx % 5) ? [] : [grLine({
+  ...[...range(2, 29), ...range(32, 59)].flatMap((idx) => !(idx % 5) ? [] : [grLine({
     start: {
       x: ((radius - 1.2) *  Math.sin(Math.PI * (idx / 30)) + center.x).toFixed(2),
       y: ((radius - 1.2) * -Math.cos(Math.PI * (idx / 30)) + center.y).toFixed(2),
@@ -654,11 +524,24 @@ const text24 = ({radius, center}) => [
     },
     layer: 'F.SilkS'
   })]),
-  ...[1, 2, 4, 5, 6, 7, 8, 9, 10, 11].map((idx) => hmark({
-    x: ((radius - 2.5) *  Math.sin(Math.PI * (idx / 6)) + center.x).toFixed(2),
-    y: ((radius - 2.5) * -Math.cos(Math.PI * (idx / 6)) + center.y).toFixed(2),
+  ...[1, 2,  4, 5,  7, 8, 9, 10, 11].map((idx) => hmark({
+    x: ((radius - 2.7) *  Math.sin(Math.PI * (idx / 6)) + center.x).toFixed(2),
+    y: ((radius - 2.7) * -Math.cos(Math.PI * (idx / 6)) + center.y).toFixed(2),
     a: idx * 30
   })),
+  ...[3].map((idx) => hmarkDot({
+    x: ((radius - 1.6) *  Math.sin(Math.PI * (idx / 6)) + center.x).toFixed(2),
+    y: ((radius - 1.6) * -Math.cos(Math.PI * (idx / 6)) + center.y).toFixed(2),
+    a: idx * 30
+  })),
+  hmarkAnt({
+    x: (center.x).toFixed(2),
+    y: (center.y - radius).toFixed(2)
+  }),
+  hmarkGnd({
+    x: (center.x).toFixed(2),
+    y: (center.y + radius).toFixed(2)
+  }),
   // dateWindow({
   //   x: center.x + 10.55,
   //   y: center.y
@@ -673,47 +556,41 @@ const text24 = ({radius, center}) => [
 ];
 
 const labels = ({center}) => [
-  grText({
-    text: '50Ω',
-    at: {x: center.x, y: center.y - 6},
-    font: {face: 'Adwaita Sans'},
-    layer: 'F.Cu'
+  grRect({
+    start: {x: 48.0, y: 43.2},
+    end:   {x: 52.0, y: 43.8},
+    stroke: {width: 2},
+    layer: 'F.Cu', fill: true
   }),
   grText({
     text: '50Ω',
-    at: {x: center.x, y: center.y - 6},
-    font: {face: 'Adwaita Sans'},
+    at: {x: center.x, y: center.y - 6.3},
+    font: {face: 'Adwaita Sans', size: 2},
     layer: 'F.Mask'
   }),
-  grText({
-    text: 'EU2A  I6YP',
-    at: {x: center.x, y: center.y + 5.4},
-    font: {face: 'Luxi Mono', size: 1.5},
-    layer: 'F.Cu'
+  grRect({
+    start: {x: 44.0, y: 56.6},
+    end:   {x: 56.0, y: 57.7},
+    stroke: {width: 1},
+    layer: 'F.Cu', fill: true
   }),
   grText({
     text: 'EU2A  I6YP',
-    at: {x: center.x, y: center.y + 5.4},
+    at: {x: center.x, y: center.y + 7.3},
     font: {face: 'Luxi Mono', size: 1.5},
     layer: 'F.Mask'
   }),
   grText({
     text: 'A',
-    at: {x: center.x, y: center.y + 5},
+    at: {x: center.x, y: center.y + 6.9},
     font: {face: 'Luxi Mono', size: 2.5},
     layer: 'F.Cu'
   }),
   grText({
     text: 'A',
-    at: {x: center.x, y: center.y + 5},
+    at: {x: center.x, y: center.y + 6.9},
     font: {face: 'Luxi Mono', size: 2.5},
     layer: 'F.Mask'
-  }),
-  grText({
-    text: 'GMT',
-    at: {x: center.x, y: center.y + 8},
-    font: {face: 'Adwaita Sans', size: 1},
-    layer: 'F.SilkS'
   })
 ];
 
