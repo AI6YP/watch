@@ -54,6 +54,7 @@ const pcbHeader = () => `\
       )
       (layer "F.Mask"
         (type "Top Solder Mask")
+        (color "#80373D42")
         (thickness 0.01)
       )
       (layer "F.Cu"
@@ -62,6 +63,7 @@ const pcbHeader = () => `\
       )
       (layer "dielectric 1"
         (type "core")
+        (color "#000000FF")
         (thickness 0.51)
         (material "FR4")
         (epsilon_r 4.5)
@@ -276,13 +278,13 @@ const pcbEdge = ({center, r1, r2, r3}) => [
   }),
   grCircle({
     center: {x: center.x + 9.672,        y: center.y - 8.667},
-    end:    {x: center.x + 9.672 + 1.25, y: center.y - 8.667},
-    layer: 'B.Cu', fill: true
+    end:    {x: center.x + 9.672 + 0.35, y: center.y - 8.667},
+    layer: 'Edge.Cuts', fill: true
   }),
   grCircle({
     center: {x: center.x - 9.466,        y: center.y + 8.93},
-    end:    {x: center.x - 9.466 + 1.25, y: center.y + 8.93},
-    layer: 'B.Cu', fill: true
+    end:    {x: center.x - 9.466 + 0.35, y: center.y + 8.93},
+    layer: 'Edge.Cuts', fill: true
   }),
   // via({
   //   at: {x: center.x + 9.672, y: center.y - 8.667},
@@ -308,9 +310,9 @@ const pcbEdge = ({center, r1, r2, r3}) => [
   (gr_poly
     (pts
       ${range(361).map((a) => `(xy ${
-    (r1 *  Math.sin(Math.PI * a / 180) + center.x).toFixed(2)
+    ((r1 + ((a > 90 && a < 270) ? 2.2 : 0)) *  Math.sin(Math.PI * a / 180) + center.x).toFixed(2)
   } ${
-    (r1 * -Math.cos(Math.PI * a / 180) + center.y).toFixed(2)
+    ((r1 + ((a > 90 && a < 270) ? 2.2 : 0)) * -Math.cos(Math.PI * a / 180) + center.y).toFixed(2)
   })`).join(' ')}
       ${range(361).map((a) => `(xy ${
     (r3 *  Math.sin(Math.PI * -a / 180) + center.x).toFixed(2)
@@ -641,13 +643,13 @@ const text24 = ({radius, center}) => [
   //   x: center.x + 10.55,
   //   y: center.y
   // }),
-  grArc({
-    start:  {x: 65.2, y: 50},
-    mid:    {x: 50,   y: 65.2},
-    end:    {x: 34.8, y: 50},
-    width: 2,
-    layer:  'F.Cu'
-  })
+  // grArc({
+  //   start:  {x: 65.2, y: 50},
+  //   mid:    {x: 50,   y: 65.2},
+  //   end:    {x: 34.8, y: 50},
+  //   width: 2,
+  //   layer:  'F.Cu'
+  // })
 ];
 
 const labels = ({center}) => [
@@ -702,7 +704,7 @@ const labels = ({center}) => [
 ];
 
 const main = async () => {
-  const pcbFilePathOnly = path.resolve(__dirname, '..', 'dial-v2');
+  const pcbFilePathOnly = path.resolve(__dirname, '..', 'dial-v2.1');
 
   try {
     await access(pcbFilePathOnly);
@@ -710,12 +712,12 @@ const main = async () => {
     await mkdir(pcbFilePathOnly);
   }
 
-  const pcbFilePath = path.resolve(pcbFilePathOnly, 'dial-v2.kicad_pcb');
+  const pcbFilePath = path.resolve(pcbFilePathOnly, 'dial-v2.1.kicad_pcb');
 
   const center = {x: 50, y: 50};
   const pcbFileBody = [
     pcbHeader(),
-    ...pcbEdge({r1: 32.4 / 2, r2: 33.8 / 2, r3: 40 / 2, center}),
+    ...pcbEdge({r1: 28 / 2, r2: 33.8 / 2, r3: 40 / 2, center}),
     smithChart({radius: 14, center}),
     ...text24({radius: 15, center}),
     radioDiamond(),
