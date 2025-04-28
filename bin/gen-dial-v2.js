@@ -136,7 +136,44 @@ const pcbFooter = () => `
 )
 `;
 
-const grArc = (pos) => `
+const euclidianDistance = (c, p0, p1, p2) => {
+  const d0 = (p0.x - c.x) ** 2 + (p0.y - c.y) ** 2;
+  const d1 = (p1.x - c.x) ** 2 + (p1.y - c.y) ** 2;
+  const d2 = (p2.x - c.x) ** 2 + (p2.y - c.y) ** 2;
+  console.log(d0 - d1, d1 - d2);
+};
+
+const cCenter = (p0, p1, p2) => {
+  const p01 = {
+    x: (p1.x + p0.x) / 2,
+    y: (p1.y + p0.y) / 2,
+    dx: p1.x - p0.x,
+    dy: p1.y - p0.y
+  };
+  p01.slope = p01.dy / p01.dx;
+  const p12 = {
+    x: (p2.x + p1.x) / 2,
+    y: (p2.y + p1.y) / 2,
+    dx: p2.x - p1.x,
+    dy: p2.y - p1.y
+  };
+  p12.slope = p12.dy / p12.dx;
+  const p20 = {
+    dy: p0.y - p2.y
+  };
+
+  const center = {x: (
+    (p01.slope * p12.slope * p20.dy / 2 + p12.slope * p01.x - p01.slope * p12.x)
+    / (p12.slope - p01.slope)
+  )};
+  center.y = (p01.x - center.x) / p01.slope + p01.y;
+  return center;
+};
+
+
+const grArc = (pos) => {
+  if (pos?.obstacles === undefined) {
+    return `
   (gr_arc
     (start ${pos.start.x.toFixed(2)} ${pos.start.y.toFixed(2)})
     (mid ${pos.mid.x.toFixed(2)} ${pos.mid.y.toFixed(2)})
@@ -144,6 +181,44 @@ const grArc = (pos) => `
     (stroke (width ${pos.width || 0.2}) (type solid))
     (layer "${pos.layer}")
   )`;
+  }
+  const center = cCenter(pos.start, pos.mid, pos.end);
+  const radius = Math.sqrt((pos.start.y - center.y) ** 2 + (pos.start.x - center.x) ** 2);
+  let astart = Math.atan2(pos.start.y - center.y, pos.start.x - center.x);
+  let aend = Math.atan2(pos.end.y - center.y, pos.end.x - center.x);
+  // [astart, aend] = (astart > aend) ? [aend, astart] : [astart, aend];
+  if (aend < astart) {
+    aend += Math.PI * 2;
+  }
+  const fullAngle = aend - astart;
+  const points = [];
+  for (let i = 0; i <= 90; i += 1) {
+    const a = astart + i * fullAngle / 90;
+    points.push({
+      x: radius *  Math.cos(a) + center.x,
+      y: radius *  Math.sin(a) + center.y
+    });
+  }
+  points.map((point, idx) => { point.idx = idx; });
+  pos.obstacles.map((o) =>
+    points.map((p, idx) => {
+      if (
+        p &&
+        (p.x > o.start.x) && (p.y > o.start.y) &&
+        (p.x < o.end.x)   && (p.y < o.end.y)
+      ) {
+        points[idx] = null;
+      }
+    })
+  );
+  return points.flatMap((point, idx, arr) => {
+    const from = arr[idx - 1];
+    if (!(from && point)) {
+      return [];
+    }
+    return [grLine({start: arr[idx - 1], end: point, layer: pos.layer})];
+  }).join('');
+};
 
 const grCircle = (pos) => `
   (gr_circle
@@ -200,13 +275,13 @@ const pcbEdge = ({center, r1, r2, r3}) => [
     layer: 'Edge.Cuts'
   }),
   grCircle({
-    center: {x: center.x + 9.672,       y: center.y - 8.667},
-    end:    {x: center.x + 9.672 + 1.5,  y: center.y - 8.667},
+    center: {x: center.x + 9.672,        y: center.y - 8.667},
+    end:    {x: center.x + 9.672 + 1.25, y: center.y - 8.667},
     layer: 'B.Cu', fill: true
   }),
   grCircle({
     center: {x: center.x - 9.466,        y: center.y + 8.93},
-    end:    {x: center.x - 9.466 + 1.5,  y: center.y + 8.93},
+    end:    {x: center.x - 9.466 + 1.25, y: center.y + 8.93},
     layer: 'B.Cu', fill: true
   }),
   // via({
@@ -256,6 +331,12 @@ const smithPos = (re, im) => {
   return [x, -y];
 };
 
+const obstacles = [
+  {start: {x: 47.0, y: 42.0}, end: {x: 53.0, y: 45.0}},
+  {start: {x: 44.1, y: 56.3}, end: {x: 56.1, y: 58.1}},
+  {start: {x: 49.3, y: 55.0}, end: {x: 50.7, y: 57.0}}
+];
+
 const smithReLine = (cfg) => (x, y0, y1) => {
   y0 = Number(y0.toFixed(5));
   y1 = Number(y1.toFixed(5));
@@ -272,14 +353,15 @@ const smithReLine = (cfg) => (x, y0, y1) => {
   y1 = r / y1;
   y2 = r / y2;
   // const r = x;
-  const [xs, ys] = smithPos(x, y0);
+  const [xs, ys] = smithPos(x, y1);
   const [xm, ym] = smithPos(x, y2);
-  const [xe, ye] = smithPos(x, y1);
+  const [xe, ye] = smithPos(x, y0);
   // const flag = (x > y0) ? 1 : 0;
   return grArc({
     start:  {x: xs + cx + r, y: ys + cy},
     mid:    {x: xm + cx + r, y: ym + cy},
     end:    {x: xe + cx + r, y: ye + cy},
+    obstacles,
     layer:  'F.Cu'
   });
 };
@@ -305,10 +387,13 @@ const smithImLine = (cfg) => (x0, x1, y) => {
   const [xs, ys] = smithPos(r2, y);
   const [xm, ym] = smithPos(r3, y);
   const [xe, ye] = smithPos(r1, y);
+  const from = {x: xs + cx + r, y: ys + cy};
+  const to = {x: xe + cx + r, y: ye + cy};
   return grArc({
-    start:  {x: xs + cx + r, y: ys + cy},
+    start:  (y < 0) ? to : from,
     mid:    {x: xm + cx + r, y: ym + cy},
-    end:    {x: xe + cx + r, y: ye + cy},
+    end:    (y < 0) ? from : to,
+    obstacles,
     layer:  'F.Cu'
   });
 };
@@ -464,29 +549,39 @@ const dateWindow = ({x, y}) => `
   (embedded_fonts no)
 )`;
 
-const radioDiamond = () => `\
+const radioDiamond = () => {
+  const r = 5.5;
+  const l = -5;
+  const t = -4;
+  const b = 4;
+  return `\
   (footprint "AI6YP:RadioDiamond"
     (layer "F.Cu")
     (at 50 50)
     (attr smd)
-    (fp_line (start  0   -9  ) (end  0   -8  ) (stroke (width 0.3) (type solid) (color 68 68 68 1)) (layer "F.SilkS"))
-    (fp_line (start  0   -5  ) (end  0   -4  ) (stroke (width 0.3) (type solid) (color 68 68 68 1)) (layer "F.SilkS"))
-    (fp_line (start  0    5  ) (end  0    4  ) (stroke (width 0.3) (type solid) (color 68 68 68 1)) (layer "F.SilkS"))
-    (fp_line (start  0    9  ) (end  0    8  ) (stroke (width 0.3) (type solid) (color 68 68 68 1)) (layer "F.SilkS"))
-    (fp_line (start -4   -4  ) (end  4   -4  ) (stroke (width 0.3) (type solid) (color 68 68 68 1)) (layer "F.SilkS"))
-    (fp_line (start -4    4  ) (end  4    4  ) (stroke (width 0.3) (type solid) (color 68 68 68 1)) (layer "F.SilkS"))
+    (fp_line (start  0   -9  ) (end  0   -8  ) (stroke (width 0.2) (type solid) (color 68 68 68 1)) (layer "F.SilkS"))
+    (fp_line (start  0 ${t-1}) (end  0   ${t}) (stroke (width 0.2) (type solid) (color 68 68 68 1)) (layer "F.SilkS"))
+    (fp_line (start  0 ${b+1}) (end  0   ${b}) (stroke (width 0.2) (type solid) (color 68 68 68 1)) (layer "F.SilkS"))
+    (fp_line (start  0    9  ) (end  0    8  ) (stroke (width 0.2) (type solid) (color 68 68 68 1)) (layer "F.SilkS"))
+    (fp_line (start ${l} ${t}) (end ${r} ${t}) (stroke (width 0.2) (type solid) (color 68 68 68 1)) (layer "F.SilkS"))
+    (fp_line (start ${l} ${b}) (end ${r} ${b}) (stroke (width 0.2) (type solid) (color 68 68 68 1)) (layer "F.SilkS"))
 
-    (fp_line (start -4   -4  ) (end -4   -0.7) (stroke (width 0.3) (type solid) (color 68 68 68 1)) (layer "F.SilkS"))
-    (fp_line (start -6   -0.7) (end -2   -0.7) (stroke (width 0.3) (type solid) (color 68 68 68 1)) (layer "F.SilkS"))
-    (fp_line (start -6    0.7) (end -2    0.7) (stroke (width 0.3) (type solid) (color 68 68 68 1)) (layer "F.SilkS"))
-    (fp_line (start -4    4  ) (end -4    0.7) (stroke (width 0.3) (type solid) (color 68 68 68 1)) (layer "F.SilkS"))
+    (fp_arc  (start ${l} -4) (mid  ${l-1} -3  ) (end  ${l} -2) (stroke (width 0.2) (type solid)) (layer "F.SilkS"))
+    (fp_arc  (start ${l} -2) (mid  ${l-1} -0.7) (end  ${l}  0) (stroke (width 0.2) (type solid)) (layer "F.SilkS"))
+    (fp_arc  (start ${l}  0) (mid  ${l-1}  0.7) (end  ${l}  2) (stroke (width 0.2) (type solid)) (layer "F.SilkS"))
+    (fp_arc  (start ${l}  2) (mid  ${l-1}  3  ) (end  ${l}  4) (stroke (width 0.2) (type solid)) (layer "F.SilkS"))
 
-    (fp_arc  (start  4   -4  ) (mid  5   -3  ) (end  4   -2  ) (stroke (width 0.3) (type solid)) (layer "F.SilkS"))
-    (fp_arc  (start  4   -2  ) (mid  5   -0.7) (end  4    0  ) (stroke (width 0.3) (type solid)) (layer "F.SilkS"))
-    (fp_arc  (start  4    0  ) (mid  5    0.7) (end  4    2  ) (stroke (width 0.3) (type solid)) (layer "F.SilkS"))
-    (fp_arc  (start  4    2  ) (mid  5    3  ) (end  4    4  ) (stroke (width 0.3) (type solid)) (layer "F.SilkS"))
+    (fp_line (start ${r}   -4  ) (end ${r}   -0.5) (stroke (width 0.2) (type solid) (color 68 68 68 1)) (layer "F.SilkS"))
+    (fp_line (start ${r+2} -0.5) (end ${r-2} -0.5) (stroke (width 0.2) (type solid) (color 68 68 68 1)) (layer "F.SilkS"))
+    (fp_line (start ${r+2}  0.5) (end ${r-2}  0.5) (stroke (width 0.2) (type solid) (color 68 68 68 1)) (layer "F.SilkS"))
+    (fp_line (start ${r}    4  ) (end ${r}    0.5) (stroke (width 0.2) (type solid) (color 68 68 68 1)) (layer "F.SilkS"))
+    (fp_line (start ${r-2}  2  ) (end ${r+2}  -2 ) (stroke (width 0.2) (type solid) (color 68 68 68 1)) (layer "F.SilkS"))
+    (fp_line (start ${r+2} -2  ) (end ${r+1.2+.2}  ${-1.2+.2} ) (stroke (width 0.2) (type solid) (color 68 68 68 1)) (layer "F.SilkS"))
+    (fp_line (start ${r+2} -2  ) (end ${r+1.2-.2}  ${-1.2-.2} ) (stroke (width 0.2) (type solid) (color 68 68 68 1)) (layer "F.SilkS"))
+
     (embedded_fonts no)
-  )`;
+  )`
+};
 
 const text24 = ({radius, center}) => [
   ...[...range(1, 12), ...range(13, 24)].map(idx => {
@@ -556,40 +651,52 @@ const text24 = ({radius, center}) => [
 ];
 
 const labels = ({center}) => [
-  grRect({
-    start: {x: 48.0, y: 43.2},
-    end:   {x: 52.0, y: 43.8},
-    stroke: {width: 2},
-    layer: 'F.Cu', fill: true
-  }),
+  // grRect({
+  //   start: {x: 48.0, y: 43.2},
+  //   end:   {x: 52.0, y: 43.8},
+  //   stroke: {width: 2},
+  //   layer: 'F.Cu', fill: true
+  // }),
   grText({
     text: '50Ω',
     at: {x: center.x, y: center.y - 6.3},
     font: {face: 'Adwaita Sans', size: 2},
     layer: 'F.Mask'
   }),
-  grRect({
-    start: {x: 44.0, y: 56.6},
-    end:   {x: 56.0, y: 57.7},
-    stroke: {width: 1},
-    layer: 'F.Cu', fill: true
+  grText({
+    text: '50Ω',
+    at: {x: center.x, y: center.y - 6.3},
+    font: {face: 'Adwaita Sans', size: 2},
+    layer: 'F.Cu'
+  }),
+  // grRect({
+  //   start: {x: 44.0, y: 56.6},
+  //   end:   {x: 56.0, y: 57.7},
+  //   stroke: {width: 1},
+  //   layer: 'F.Cu', fill: true
+  // }),
+  grText({
+    text: 'EU2A  I6YP',
+    at: {x: center.x, y: center.y + 7.3},
+    font: {face: 'Roboto Mono', size: 1.4},
+    layer: 'F.Cu'
   }),
   grText({
     text: 'EU2A  I6YP',
     at: {x: center.x, y: center.y + 7.3},
-    font: {face: 'Luxi Mono', size: 1.5},
+    font: {face: 'Roboto Mono', size: 1.4},
     layer: 'F.Mask'
   }),
   grText({
     text: 'A',
     at: {x: center.x, y: center.y + 6.9},
-    font: {face: 'Luxi Mono', size: 2.5},
+    font: {face: 'Roboto Mono', size: 2.5},
     layer: 'F.Cu'
   }),
   grText({
     text: 'A',
     at: {x: center.x, y: center.y + 6.9},
-    font: {face: 'Luxi Mono', size: 2.5},
+    font: {face: 'Roboto Mono', size: 2.5},
     layer: 'F.Mask'
   })
 ];
