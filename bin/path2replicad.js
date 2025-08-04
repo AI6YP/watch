@@ -4,6 +4,7 @@
 const fs = require('fs');
 const path = require('path');
 const onml = require('onml');
+const commander = require('commander');
 
 const dstr2arr = (d) => {
   d = d.split(/\s*,\s*/);
@@ -11,69 +12,153 @@ const dstr2arr = (d) => {
   return d.map((e) => isNaN(e) ? e : parseFloat(e));
 };
 
-const path2draw = (d, cfg) => {
-  const sx = (val) => val * cfg.sx;
-  const sy = (val) => val * cfg.sy; // TODO flip compare to SVG
-  let res = '';
-  let i = 0;
-  let x = 0;
-  let y = 0;
-  while(i < d.length) {
-    switch (d[i]) {
-    case 'Z':
-    case 'z':
-      res += '  .close();\n\n';
-      break;
-    case 'm':
-      x += sx(d[i + 1]);
-      y += sy(d[i + 2]);
-      res += '  .movePointerTo([' + x + ', ' + -y + '])\n';
-      i += 2;
-      break;
-    case 'M':
-      x = sx(d[i + 1]);
-      y = sy(d[i + 2]);
-      res += '  .movePointerTo([' + x + ', ' + -y + '])\n';
-      i += 2;
-      break;
-    case 'C':
-      for (let j = 0; j < 100; j++) {
-        res += '  .cubicBezierCurveTo('
-          + '[' + sx(d[i + 5]) + ', ' + -sy(d[i + 6]) + '], '
-          + '[' + sx(d[i + 1]) + ', ' + -sy(d[i + 2]) + '], '
-          + '[' + sx(d[i + 3]) + ', ' + -sy(d[i + 4]) + '])\n';
-        x = sx(d[i + 5]);
-        y = sy(d[i + 6]);
-        i += 6;
-        if (typeof d[i + 1] !== 'number') {
-          break;
-        }
-      }
-      break;
-    case 'c':
-      for (let j = 0; j < 100; j++) {
-        res += '  .cubicBezierCurveTo('
-          + '[' + (x + sx( d[i + 5])) + ', ' + -(y + sy( d[i + 6])) + '], '
-          + '[' + (x + sx( d[i + 1])) + ', ' + -(y + sy( d[i + 2])) + '], '
-          + '[' + (x + sx( d[i + 3])) + ', ' + -(y + sy( d[i + 4])) + '])\n';
-        x += sx(d[i + 5]);
-        y += sy(d[i + 6]);
-        i += 6;
-        if (typeof d[i + 1] !== 'number') {
-          // res += '// ' + d[i + 1];
-          break;
-        }
-      }
-      break;
+const r = (val) => Math.round(val * 1000) / 1000;
+
+const lineTo = (o) => {
+  return '.lineTo([' + r(o.x) + ', ' + -r(o.y) + '])';
+};
+
+const movePointerTo = (o) => {
+  return '.movePointerTo([' + r(o.x) + ', ' + -r(o.y) + '])';
+};
+
+const point = (x, y) => {
+  return '[' + r(x) + ', ' + -r(y) + ']';
+};
+
+const cmdf = (cfg, o, d) => {
+  const sx = (x) => x * cfg.sx;
+  const sy = (y) => y * cfg.sy;
+  const d1 = () => d[o.i + 1];
+  const d2 = () => d[o.i + 2];
+  const d3 = () => d[o.i + 3];
+  const d4 = () => d[o.i + 4];
+  const d5 = () => d[o.i + 5];
+  const d6 = () => d[o.i + 6];
+  return {
+    z: () => {
+      return '.close();';
+    },
+    Z: () => {
+      return '.close();';
+    },
+    m: () => {
+      o.x += sx(d1()); o.y += sy(d2()); o.i += 2; return movePointerTo(o);
+    },
+    M: () => {
+      o.x = sx(d1()); o.y = sy(d2()); o.i += 2; return movePointerTo(o);
+    },
+    v: () => {
+      o.y += sy(d1()); o.i += 1; return lineTo(o);
+    },
+    V: () => {
+      o.y = sy(d1()); o.i += 1; return lineTo(o);
+    },
+    h: () => {
+      o.x += sx(d1()); o.i += 1; return lineTo(o);
+    },
+    H: () => {
+      o.x = sx(d1()); o.i += 1; return lineTo(o);
+    },
+    l: () => {
+      o.x += sx(d1()); o.y += sy(d2()); o.i += 2; return lineTo(o);
+    },
+    L: () => {
+      o.x = sx(d1()); o.y = sy(d2()); o.i += 2; return lineTo(o);
+    },
+    C: () => {
+      o.x = sx(d5()); o.y = sy(d6());
+      const res = '.cubicBezierCurveTo('
+        + point(o.x, o.y) + ', '
+        + point(sx(d1()), sy(d2())) + ', '
+        + point(sx(d3()), sy(d4())) + ')';
+      o.i += 6;
+      return res;
+    },
+    c: () => {
+      const res = '.cubicBezierCurveTo('
+        + point(o.x + sx(d5()), o.y + sy(d6())) + ', '
+        + point(o.x + sx(d1()), o.y + sy(d2())) + ', '
+        + point(o.x + sx(d3()), o.y + sy(d4())) + ')'
+      o.x += sx(d5());
+      o.y += sy(d6());
+      o.i += 6;
+      return res;
+    },
+    A: () => {
+      let [rx, ry, xrot, large, sweep, ex, ey] = d.slice(o.i + 1, o.i + 8);
+      rx = sx(rx);
+      ry = sy(ry);
+      ex = sx(ex);
+      ey = sy(ey);
+      const res = '.ellipseTo('
+        + point(ex, ey) + ', '
+        + r(rx) + ', ' + r(ry) + ', '
+        + xrot + ', '
+        + (large === 1) + ', '
+        + (sweep === 0) + ')';
+      o.x = ex;
+      o.y = ey;
+      o.i += 7;
+      return res;
+    },
+    a: () => {
+      let [rx, ry, xrot, large, sweep, ex, ey] = d.slice(o.i + 1, o.i + 8);
+      rx = sx(rx);
+      ry = sy(ry);
+      ex = sx(ex);
+      ey = sy(ey);
+      const res = '.ellipseTo('
+        + point(o.x + ex, o.y + ey) + ', '
+        + r(rx) + ', ' + r(ry) + ', '
+        + xrot + ', '
+        + (large === 1) + ', '
+        + (sweep === 0) + ')';
+      o.x += ex;
+      o.y += ey;
+      o.i += 7;
+      return res;
     }
-    i++;
+  };
+};
+
+
+const path2draw = (d, cfg) => {
+  let res = '';
+  const o = {x: 0, y: 0, i: 0};
+  const cmdo = cmdf(cfg, o, d);
+  while(o.i < d.length) {
+    const cmd = d[o.i];
+    for (let j = 0; j < 100; j++) {
+      const fn = cmdo[cmd];
+      if (!fn) {
+        console.log('unknown cmd', cmd);
+        break;
+      }
+      res += '  ' + fn() + ' // ' + cmd + '\n';
+      if (typeof d[o.i + 1] !== 'number') {
+        break;
+      }
+      res += '  ';
+    }
+    o.i += 1;
   }
   return res;
 };
 
-const main = async (sx, sy) => {
-  const svgPath = path.resolve(__dirname, '..', 'digits.svg');
-  const svgStr = await fs.promises.readFile(svgPath, 'utf8');
+const main = async () => {
+  const program = new commander.Command();
+  program
+    .requiredOption('-i, --input <file>', 'input SVG file')
+    .option('-o, --output <file>', 'output file', 'out.js')
+    .option('--sx <n>', 'scale x', parseFloat, 0.5)
+    .option('--sy <n>', 'scale y', parseFloat, 0.5)
+    .parse(process.argv);
+
+  const opts = program.opts();
+  opts.input = path.resolve(opts.input);
+  opts.output = path.resolve(opts.output);
+  const svgStr = await fs.promises.readFile(opts.input, 'utf8');
   const svgMl = onml.parse(svgStr);
 
   const segGroupMl = svgMl[4].flatMap((e) => !Array.isArray(e) ? [] :
@@ -83,16 +168,18 @@ const main = async (sx, sy) => {
     }]
   );
 
-  // console.log(JSON.stringify(segGroupMl, null, 2));
   let res = '';
   for (const ge of segGroupMl) {
     for (const se of ge.body) {
       res += 'const seg_' + ge.id + '_' + se.id + ' = () => draw()\n';
-      res += path2draw(dstr2arr(se.d), {sx, sy});
+      res += path2draw(dstr2arr(se.d), opts);
     }
   }
-  console.log(res);
-
+  if (opts.output) {
+    await fs.promises.writeFile(opts.output, res);
+  } else {
+    console.log(res);
+  }
 };
 
-main(0.5, 0.5);
+main();
