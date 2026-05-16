@@ -29,6 +29,7 @@
     "extends": "@drom/eslint-config/eslint8/node22"
   },
   "dependencies": {
-    "lodash.range": "^3.2.0"
+    "lodash.range": "^3.2.0",
+    "neghero": "^1.2.0"
   }
 }
