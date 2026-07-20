@@ -8,4 +8,6 @@ out-*.js
 segments.js
 tmp/
 PXL_*.jpg
+gerbers/
+*.zip
 
