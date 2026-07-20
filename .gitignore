@@ -2,4 +2,10 @@ node_modules
 package-lock.json
 ref
 dial-v*/
+.history/
+out.js
+out-*.js
+segments.js
+tmp/
+PXL_*.jpg
 
