@@ -79,7 +79,7 @@ const cmdf = (cfg, o, d) => {
       const res = '.cubicBezierCurveTo('
         + point(o.x + sx(d5()), o.y + sy(d6())) + ', '
         + point(o.x + sx(d1()), o.y + sy(d2())) + ', '
-        + point(o.x + sx(d3()), o.y + sy(d4())) + ')'
+        + point(o.x + sx(d3()), o.y + sy(d4())) + ')';
       o.x += sx(d5());
       o.y += sy(d6());
       o.i += 6;
